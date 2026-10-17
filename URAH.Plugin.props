@@ -1,0 +1,53 @@
+<Project>
+  <!--
+    Common build settings of the URAH BepInEx plugins. A plugin's csproj finds this folder as
+    URAHShared (the workspace's shared/ when it exists, else the submodule external/URAH_shared)
+    and imports this file. URAHModLink=true compiles ModLink.cs into the plugin.
+    Game and loader assemblies are referenced from the local install, never copied or redistributed;
+    GameDir defaults to the Steam install on Linux.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GameDir Condition="'$(GameDir)' == ''">$(HOME)/.steam/steam/steamapps/common/Knights of Honor II</GameDir>
+    <ManagedDir>$(GameDir)/Sovereign_Data/Managed</ManagedDir>
+    <BepInExCore>$(GameDir)/BepInEx/core</BepInExCore>
+    <BepInExPlugins>$(GameDir)/BepInEx/plugins</BepInExPlugins>
+  </PropertyGroup>
+
+  <!--
+    Reproducible builds: the same commit, SDK (global.json) and game version give the same DLL bytes
+    on every machine, so anyone can rebuild a release and compare its SHA-256. No machine paths (no
+    PDB, source paths mapped), no commit id or date in the version.
+  -->
+  <PropertyGroup>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <DebugType>none</DebugType>
+    <PathMap>$(MSBuildProjectDirectory)=/_/plugin,$(MSBuildThisFileDirectory)=/_/shared/</PathMap>
+    <EnableSourceLink>false</EnableSourceLink>
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(URAHModLink)' == 'true'">
+    <Compile Include="$(MSBuildThisFileDirectory)ModLink.cs" Link="Shared/ModLink.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="BepInEx" HintPath="$(BepInExCore)/BepInEx.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(BepInExCore)/0Harmony.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="$(ManagedDir)/UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(ManagedDir)/UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="Assembly-CSharp" HintPath="$(ManagedDir)/Assembly-CSharp.dll" Private="false" />
+    <Reference Include="Assembly-CSharp-firstpass" HintPath="$(ManagedDir)/Assembly-CSharp-firstpass.dll" Private="false" />
+  </ItemGroup>
+</Project>
