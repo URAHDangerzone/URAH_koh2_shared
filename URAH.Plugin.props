@@ -13,8 +13,14 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GameDir Condition="'$(GameDir)' == ''">$(HOME)/.steam/steam/steamapps/common/Knights of Honor II</GameDir>
-    <ManagedDir>$(GameDir)/Sovereign_Data/Managed</ManagedDir>
-    <BepInExCore>$(GameDir)/BepInEx/core</BepInExCore>
+    <!-- Without a game (CI) or with URAHUseRefs=true: reference assemblies (method bodies stripped)
+         from URAHRefs, by default refs/ of the knowledge workspace (tools/make_refs.sh) -->
+    <URAHRefs Condition="'$(URAHRefs)' == ''">$(MSBuildThisFileDirectory)../refs</URAHRefs>
+    <URAHUseRefs Condition="'$(URAHUseRefs)' == '' and !Exists('$(GameDir)/Sovereign_Data/Managed')">true</URAHUseRefs>
+    <ManagedDir Condition="'$(URAHUseRefs)' != 'true'">$(GameDir)/Sovereign_Data/Managed</ManagedDir>
+    <BepInExCore Condition="'$(URAHUseRefs)' != 'true'">$(GameDir)/BepInEx/core</BepInExCore>
+    <ManagedDir Condition="'$(URAHUseRefs)' == 'true'">$(URAHRefs)/Managed</ManagedDir>
+    <BepInExCore Condition="'$(URAHUseRefs)' == 'true'">$(URAHRefs)/BepInEx</BepInExCore>
     <BepInExPlugins>$(GameDir)/BepInEx/plugins</BepInExPlugins>
   </PropertyGroup>
 
@@ -37,6 +43,30 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
+
+  <!--
+    Single version source: plugin/version.txt (one line, e.g. 0.26.0). It becomes the assembly
+    version and the constant URAH.BuildVersion.Value for [BepInPlugin]; a release bumps that one line.
+  -->
+  <PropertyGroup Condition="Exists('$(MSBuildProjectDirectory)/version.txt')">
+    <URAHVersion>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/version.txt').Trim())</URAHVersion>
+    <Version>$(URAHVersion)</Version>
+    <AssemblyVersion>$(URAHVersion)</AssemblyVersion>
+    <FileVersion>$(URAHVersion)</FileVersion>
+    <InformationalVersion>$(URAHVersion)</InformationalVersion>
+  </PropertyGroup>
+
+  <Target Name="URAHVersion" BeforeTargets="CoreCompile" Condition="'$(URAHVersion)' != ''">
+    <PropertyGroup>
+      <URAHVersionFile>$(IntermediateOutputPath)Version.g.cs</URAHVersionFile>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(URAHVersionFile)" Overwrite="true" WriteOnlyWhenDifferent="true"
+                      Lines="// generated from version.txt;namespace URAH { internal static class BuildVersion { public const string Value = &quot;$(URAHVersion)&quot;%3B } }" />
+    <ItemGroup>
+      <Compile Include="$(URAHVersionFile)" />
+      <FileWrites Include="$(URAHVersionFile)" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup Condition="'$(URAHModLink)' == 'true'">
     <Compile Include="$(MSBuildThisFileDirectory)ModLink.cs" Link="Shared/ModLink.cs" />
