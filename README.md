@@ -1,4 +1,4 @@
-# URAH_shared
+# URAH_koh2_shared
 
 Code the URAH mods for **Knights of Honor II: Sovereign** share. Each mod repo includes this repo
 as the git submodule `external/URAH_shared`.
