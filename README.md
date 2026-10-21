@@ -9,6 +9,8 @@ as the git submodule `external/URAH_shared`.
 - `ModLink.cs`: ties a plugin's Harmony patches to the game's mod list. The patches are applied while
   an active mod names the plugin's GUID in `bepinex_plugins.txt` in its root folder, and removed when
   the last such mod is switched off. Compiled into the plugins that set `URAHModLink=true`.
+  In multiplayer every active link publishes its plugin version as the player var `urah_p_<guid>`
+  and blocks the host's start (`client_version_mismatch`) while a player online lacks that version.
 - `python/`: helpers for the tools that build map data
   - `koh2map.py`: the game's map files (realms.bin, realms.def, border and bounds data, ...)
   - `koh2terrain.py`: europe terrain constants, DEM reading
